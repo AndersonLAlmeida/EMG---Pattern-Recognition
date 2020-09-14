@@ -1,1 +1,1 @@
-# EMG-Pattern-Recognition
+# EMG - Pattern Recognition
