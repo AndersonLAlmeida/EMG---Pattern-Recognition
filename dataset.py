@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from scipy.fft import fft
 from libs.DadosBrutos import Serial_connection, Coleta
-from libs.SalvarDados import save_data
+from libs.SalvarDados import save_data, save_repouso
 from libs.ExtrairDados import delta_dirac, RMS, FFT
 
 
@@ -31,33 +31,30 @@ parser.add_argument("-p", "--porta", type=str, default="COM5", help="Porta a qua
 
 ### Implementar estrutura do DATASET ###
 def criando_paciente(nome):
-    paciente = f".\\{nome}\\"
+    paciente = f"Dataset\\{nome}\\"
     if not os.path.isdir(paciente): # vemos de este diretorio já existe
         diretorios = ["repouso", "flexao_polegar", "flexao_indicador", "flexao_total", "extensao_total"]
         for dir in diretorios:
             dir_movimento = paciente + dir
             os.makedirs(dir_movimento)
-            with open((dir_movimento + "\\amostra.txt"), "w+") as f:
-                f.write("0")
 
 
 if __name__ == '__main__':
     # Instância o argparse
     args = parser.parse_args()
 
+    criando_paciente(args.nome)
+
     N = 400
     janela = 40
     media_limiar = []
-    
-    dir_amostra = f".\\{args.nome}\\{args.movimento}\\amostra.txt"
-    with open(dir_amostra, "r") as f:
-        numero_amostra = f.read()
+
+    filename_limiar = f"Dataset\\{args.nome}\\repouso\\limiar.txt"
+    filename_data = f"Dataset\\{args.nome}\\{args.movimento}\\dados_{args.movimento}.csv"
 
     for amostra in range(0, args.amostras):
         # Coletar e salvar o sinal Bruto
-        time_full, data_full = Coleta(args.porta)
-        filename_full = f".\\{args.nome}\\{args.movimento}\\amostra_{numero_amostra}_BRUTO.csv"
-        save_data(time_full, data_full, filename_full)
+        data_full = Coleta(args.porta)
 
         if args.movimento.lower() == "repouso":
             media_limiar.append(max(data_full))
@@ -65,28 +62,20 @@ if __name__ == '__main__':
             if len(media_limiar) == args.amostras:
                 limiar = sum(media_limiar)/args.amostras
                 limiar = str(limiar)
-                filename_limiar = f".\\{args.nome}\\repouso\\limiar.txt"
                 with open(filename_limiar, 'w+') as f:
                     f.write(limiar)
+            save_repouso(data_full, filename_data)
         else:
-            time_part, data_part = delta_dirac(time_full, data_full, filename_limiar, N, janela)
+            data_part = delta_dirac(data_full, filename_limiar, N, janela)
+
             try:
-                rms_time, Vrms = RMS(time_part, data_part, N, janela)
-                x_FFT, y_FFT = FFT(data_part, N)
-                filename_part = f".\\{args.nome}\\{args.movimento}\\amostra_{numero_amostra}_part.csv"
-                filename_RMS = f".\\{args.nome}\\{args.movimento}\\amostra_{numero_amostra}_RMS.csv"
-                filename_FFT = f".\\{args.nome}\\{args.movimento}\\amostra_{numero_amostra}_FFT.csv"
-                save_data(time_part, data_part, filename_part)
-                save_data(rms_time, Vrms, filename_RMS)
-                save_data(x_FFT, y_FFT, filename_FFT)
+                data_RMS = RMS(data_part, N, janela)
+                freq_FFT, data_FFT = FFT(data_part, N)
+                save_data(data_full, data_part, data_RMS, list(data_FFT), list(freq_FFT), filename_data)
             except:
                 print("Não houve movimento ou não foi forte o suficiente, por gentileza realize novamente")
-        
-        numero_amostra = int(numero_amostra) + 1
 
-    with open(dir_amostra, "w") as f:
-        numero_amostra = str(numero_amostra)
-        f.write(numero_amostra)
+        print(f"Amostra {amostra + 1} coletada")
 
 
 

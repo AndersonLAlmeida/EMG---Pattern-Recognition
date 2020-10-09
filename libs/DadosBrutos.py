@@ -7,7 +7,6 @@ def Serial_connection(porta, baudrate = 115200):
     while True:
         try:
             arduinoData = serial.Serial(porta, baudrate)
-            print("Sucesso na conexão!")
             break
         except:
             print("Erro ao conectar com o Arduíno!")
@@ -19,7 +18,7 @@ def Coleta(porta):
     time_full = []
     data_full = []
     diff_time = 0
-    pontos_totais = 4000
+    pontos_totais = 2000
 
     serial_connection = Serial_connection(porta)
 
@@ -38,6 +37,6 @@ def Coleta(porta):
         time_full.append(diff_time)
         data_full.append(float(serial_connection.readline().decode("ascii")))  
         diff_time = diff_time + 0.5
-    
-    return time_full, data_full
+
+    return data_full
 
