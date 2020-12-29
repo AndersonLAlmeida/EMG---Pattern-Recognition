@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(description="Parâmetros para coleta de dados")
 
 # Adicionar argumentos
 parser.add_argument("-n", "--nome", type=str, required=True, help="Nome do paciente")
-parser.add_argument("-m", "--movimento", type=str, required=True, help="Movimento realizado")
+parser.add_argument("-m", "--movimento", type=str, required=True, help="Movimento realizado, opções: repouso, flexao_total ou extensao_total")
 parser.add_argument("-a", "--amostras", type=int, default=10, help="Quantidade de amostras coletadas, por padrão são 10")
 parser.add_argument("-p", "--porta", type=str, default="COM5", help="Porta a qual está conectada o conversor ADC")
 
@@ -33,10 +33,7 @@ parser.add_argument("-p", "--porta", type=str, default="COM5", help="Porta a qua
 def criando_paciente(nome):
     paciente = f"Dataset\\{nome}\\"
     if not os.path.isdir(paciente): # vemos de este diretorio já existe
-        diretorios = ["repouso", "flexao_polegar", "flexao_indicador", "flexao_total", "extensao_total"]
-        for dir in diretorios:
-            dir_movimento = paciente + dir
-            os.makedirs(dir_movimento)
+        os.makedirs(paciente)
 
 
 if __name__ == '__main__':
@@ -45,38 +42,51 @@ if __name__ == '__main__':
 
     criando_paciente(args.nome)
 
+    # Declarando quais movimentos foram realizados
+    relacao_de_movimentos = {
+    'repouso':'repouso',
+    'flexao_total':'0;1',
+    'extensao_total':'1;0',
+    'flexao_polegar':'0;0;1;0;0',
+    'flexao_indicador':'0;0;0;1;0',
+    'flexao_medio':'0;0;0;0;1',
+}
+
     N = 400
     janela = 40
-    media_limiar = []
 
-    filename_limiar = f"Dataset\\{args.nome}\\repouso\\limiar.txt"
-    filename_data = f"Dataset\\{args.nome}\\{args.movimento}\\dados_{args.movimento}.csv"
+    filename_limiar = f"Dataset\\{args.nome}\\limiar.txt"
+    filename_data = f"Dataset\\{args.nome}\\dados_classificacao.csv"
+    filename_movimento = f"Dataset\\{args.nome}\\movimentos_classificacao.csv"
+    filename_auxiliares = f"Dataset\\{args.nome}\\dados_auxiliares.csv"
+    filename_movimento_aux = f"Dataset\\{args.nome}\\movimentos_auxiliares.csv"
 
     for amostra in range(0, args.amostras):
         # Coletar e salvar o sinal Bruto
         data_full = Coleta(args.porta)
 
         if args.movimento.lower() == "repouso":
-            media_limiar.append(max(data_full))
+            limiar = sum(data_full)/len(data_full)
 
-            if len(media_limiar) == args.amostras:
-                limiar = sum(media_limiar)/args.amostras
-                limiar = str(limiar)
-                with open(filename_limiar, 'w+') as f:
-                    f.write(limiar)
-            save_repouso(data_full, filename_data)
-        else:
-            data_part = delta_dirac(data_full, filename_limiar, N, janela)
-
-            try:
-                data_RMS = RMS(data_part, N, janela)
-                freq_FFT, data_FFT = FFT(data_part, N)
-                save_data(data_full, data_part, data_RMS, list(data_FFT), list(freq_FFT), filename_data)
-            except:
-                print("Não houve movimento ou não foi forte o suficiente, por gentileza realize novamente")
-
+            limiar = str(limiar)
+            with open(filename_limiar, 'w+') as f:
+                f.write(limiar)
+        if args.movimento.lower() == "flexao_polegar" or args.movimento.lower() == "flexao_indicador" or args.movimento.lower() == "flexao_medio" or args.movimento.lower() == "repouso":
+            save_data(data_full, filename_auxiliares, filename_movimento_aux, relacao_de_movimentos[f'{args.movimento}'])
+        if args.movimento.lower() == "flexao_total" or args.movimento.lower() == "extensao_total":
+            save_data(data_full, filename_data, filename_movimento, relacao_de_movimentos[f'{args.movimento}'])
         print(f"Amostra {amostra + 1} coletada")
 
+        x = np.array(range(len(data_full)))
 
+        plt.plot( x, data_full, 'k:', color='orange') # linha pontilha orange
 
+        #plt.axis([0, 6000, 0, 2])
+        plt.title("EMG")
+
+        plt.grid(True)
+        plt.xlabel("Pontos")
+        plt.ylabel("Amplitude")
+        plt.show()
+        
 

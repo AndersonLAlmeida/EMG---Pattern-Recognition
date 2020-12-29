@@ -2,9 +2,6 @@ OsciloscopioArduino/
 .vscode/
 desktop.ini
 libs/desktop.ini
-Dataset/desktop.ini
-Dataset/Rafaela/
-Dataset/Anderson
-Dataset/Fulano
+Dataset/
 .ipynb_checkpoints/
 libs/__pycache__/

@@ -3,6 +3,7 @@ import numpy as np
 
 from math import sqrt
 from scipy.fft import fft
+import matplotlib.pyplot as plt
 
 # Obtém o RMS de um conjunto de pontos
 def f_rms(data, size):    
@@ -59,6 +60,13 @@ def FFT(data_part, N):
     #print(f"FFT: {yf}")
     xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
     
-    # plt.plot(xf, 2.0/N * np.abs(yf[0:N//2]))
+    plt.plot(xf, 2.0/N * np.abs(yf[0:N//2]))
+    plt.axis([0, 150, 0, 0.025])
+    plt.title("FFT")
+
+    plt.grid(True)
+    plt.xlabel("Freq")
+    plt.ylabel("Amplitude")
+    plt.show()
 
     return xf, yf

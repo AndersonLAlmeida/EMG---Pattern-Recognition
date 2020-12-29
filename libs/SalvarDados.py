@@ -1,13 +1,27 @@
 # -*- coding: utf-8 -*-
 
-def save_data(data_full, data_part, data_RMS, data_FFT, freq_FFT, filename):
-    write_data = str(data_full) + ';' + str(data_part) + ';' + str(data_RMS) + ";" + str(data_FFT) + ";" + str(freq_FFT) + '\n'
+def save_data(data_full, filename_data, filename_movimento, tipo_de_movimento):
+    write_data = ""
+    for sample in range(0, (len(data_full)-1)):
+        write_data += str(data_full[sample]) + ";"
     
-    with open(filename, 'a+') as f: 
+    write_data += (str(data_full[-1]) + "\n")
+    
+    # Salvar os dados
+    with open(filename_data, 'a+') as f:
+        f.write(write_data)
+    
+    # SAlvar o tipo de movimento
+    with open(filename_movimento, 'a+') as f:
+        write_data = str(tipo_de_movimento) + '\n'
         f.write(write_data)
 
-def save_repouso(data_full, filename):
-    write_data = str(data_full) + '\n'
+def save_repouso(data_full, filename, tipo_de_movimento):
+    write_data = ""
+    for sample in range(0, (len(data_full)-1)):
+        write_data += str(data_full[sample]) + ";"
+    
+    write_data += str(data_full[-1]) + "\n"
     
     with open(filename, 'a+') as f:
         f.write(write_data)

@@ -18,12 +18,16 @@ def Coleta(porta):
     time_full = []
     data_full = []
     diff_time = 0
-    pontos_totais = 2000
+    pontos_totais = 3000
 
     serial_connection = Serial_connection(porta)
 
     # Envia a informação via serial para iniciar a coleta dos dados
-    serial_connection.write(str.encode(input("Deseja iniciar? ")))
+    while True:
+        iniciar = input("Deseja iniciar? ")
+        if iniciar.lower() == 's':
+            serial_connection.write(str.encode(iniciar))
+            break
 
     # Fica no looping senão receber os dados
     while serial_connection.inWaiting() == 0:
